@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fix My Car: Turbo Mechanic Number Challenge</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+        }
+        .pulse-btn {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), filter 0.1s ease;
+        }
+        .pulse-btn:active {
+            transform: scale(0.95);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(1deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes revGlow {
+            0% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 35px rgba(239, 68, 68, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+        }
+        .neon-glow {
+            animation: revGlow 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between overflow-x-hidden p-3 sm:p-6 bg-slate-950">
+
+    <!-- Header -->
+    <header class="w-full max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between bg-slate-900/95 backdrop-blur-md p-4 rounded-3xl border border-slate-700/50 shadow-2xl gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center text-2xl shadow-lg shadow-red-500/30 animate-float shrink-0">
+                🔧
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black bg-gradient-to-r from-red-400 via-amber-300 to-yellow-400 bg-clip-text text-transparent">TURBO MECHANIC</h1>
+                <p class="text-xs text-slate-300 font-semibold">賽車修車廠數字大冒險</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <!-- Range Selector Settings -->
+            <div class="flex items-center gap-1.5 bg-slate-800 px-3 py-2 rounded-2xl border border-slate-700 text-xs sm:text-sm font-bold">
+                <span>範圍 1 ~</span>
+                <input type="number" id="customMaxInput" value="20" min="1" max="1000" class="w-16 bg-slate-900 text-amber-400 font-black px-2 py-1 rounded-xl outline-none border border-slate-600 text-center text-base">
+                <button onclick="changeCustomRange()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black">設定</button>
+            </div>
+
+            <!-- Sound Toggle -->
+            <button id="soundToggleBtn" onclick="toggleSound()" class="w-11 h-11 rounded-2xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold flex items-center justify-center border border-slate-600 shadow-lg pulse-btn text-xl shrink-0">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Workspace -->
+    <main class="w-full max-w-xl mx-auto flex-1 flex flex-col items-center justify-center my-4 gap-4">
+
+        <!-- Praise and Next Button Container (Placed between Header and Game Content) -->
+        <div id="successActionBox" class="hidden w-full bg-slate-900/95 backdrop-blur-xl p-4 sm:p-5 rounded-3xl border-2 border-emerald-500 shadow-2xl flex-col items-center gap-3 animate-bounce">
+            <p id="praiseText" class="text-emerald-400 font-black text-lg sm:text-xl text-center">🎉 引擎修好啦！賽車手非常感謝你！</p>
+            <button onclick="nextRound()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-lg shadow-lg pulse-btn">
+                進入下一題 ➡️
+            </button>
+        </div>
+
+        <!-- Single Column Layout Container -->
+        <div class="w-full flex flex-col gap-4">
+            
+            <!-- TOP FRAME: Broken/Fixed Car -->
+            <div class="w-full bg-slate-900/90 backdrop-blur-xl rounded-3xl border-2 border-slate-700/80 p-5 sm:p-6 flex flex-col items-center justify-center relative shadow-2xl">
+                <div class="absolute top-3 left-3 bg-red-600/30 text-red-400 text-xs font-bold px-3 py-1 rounded-full border border-red-500/40">
+                    故障車輛區
+                </div>
+                
+                <div id="carDisplayArea" class="text-center my-4 transition-all duration-300 transform">
+                    <div id="carEmoji" class="text-8xl sm:text-9xl mb-3 animate-bounce">🚗💥</div>
+                    <h3 id="carStatusText" class="text-xl sm:text-2xl font-bold text-rose-400 mt-3">引擎冒煙中！幫幫我找零件</h3>
+                </div>
+
+                <div class="w-full flex justify-between items-center px-2 pt-2 border-t border-slate-800 text-xs sm:text-sm text-slate-400 font-bold">
+                    <span>已修好車輛數:</span>
+                    <span id="fixedCount" class="text-emerald-400 text-lg sm:text-xl font-black">0</span>
+                </div>
+            </div>
+
+            <!-- BOTTOM FRAME: Target Audio Button & 4 Number Options -->
+            <div class="w-full bg-slate-900/90 backdrop-blur-xl rounded-3xl border-2 border-slate-700/80 p-5 sm:p-6 flex flex-col items-center justify-center gap-4 shadow-2xl">
+                
+                <!-- Audio Button Prompt -->
+                <div class="w-full flex items-center justify-between bg-slate-950 px-4 py-3 rounded-2xl border border-slate-800 shadow-inner">
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold">零件編號聽力發音：</p>
+                        <p class="text-sm font-bold text-amber-400">點擊右側聆聽目標數字</p>
+                    </div>
+                    <button onclick="playTargetAudio()" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg shadow-amber-500/30 border border-amber-200 pulse-btn shrink-0">
+                        📢
+                    </button>
+                </div>
+
+                <!-- 4 Options Grid -->
+                <div class="w-full text-center">
+                    <p class="text-xs text-slate-400 font-semibold mb-2.5">請從下方選出正確的零件編號數字：</p>
+                    <div id="optionsGrid" class="grid grid-cols-2 gap-3 w-full">
+                        <!-- Dynamically generated options -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-2 text-slate-500 text-xs">
+        Turbo Mechanic 賽車修車廠 🏎️✨ 透過聽力與隨機數字挑戰讓小孩快樂學數字！
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        let maxRange = 20;
+        let soundEnabled = true;
+        let audioCtx = null;
+        let targetNumber = 1;
+        let currentCarIssue = {};
+        let fixedCountVal = 0;
+        let isAnswered = false;
+        let cachedVoices = [];
+
+        function loadVoices() {
+            if ('speechSynthesis' in window) {
+                cachedVoices = window.speechSynthesis.getVoices();
+            }
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
+
+        const brokenCarTypes = [
+            { id: 'car', broken: "🚗💥", fixed: "🚗✨", desc: "引擎冒煙中！", fixedDesc: "引擎修好啦！" },
+            { id: 'suv', broken: "🚙🛞", fixed: "🚙🏆", desc: "輪胎爆胎中！", fixedDesc: "新輪胎換好了！" },
+            { id: 'sport', broken: "🏎️⚡", fixed: "🏎️🌟", desc: "電瓶沒電中！", fixedDesc: "電力充滿出發！" },
+            { id: 'taxi', broken: "🚕🔧", fixed: "🚕✨", desc: "零件故障中！", fixedDesc: "零件完美修復！" },
+            { id: 'van', broken: "🚐💨", fixed: "🚐🎉", desc: "排氣管冒火中！", fixedDesc: "排氣管修好啦！" }
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'success') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggleBtn').textContent = soundEnabled ? '🔊' : '🔇';
+            playSound('click');
+        }
+
+        function changeCustomRange() {
+            const inputVal = parseInt(document.getElementById('customMaxInput').value);
+            if (isNaN(inputVal) || inputVal < 1) {
+                maxRange = 20;
+                document.getElementById('customMaxInput').value = 20;
+            } else if (inputVal > 1000) {
+                maxRange = 1000;
+                document.getElementById('customMaxInput').value = 1000;
+            } else {
+                maxRange = inputVal;
+            }
+            nextRound();
+        }
+
+        function nextRound() {
+            isAnswered = false;
+            const successBox = document.getElementById('successActionBox');
+            successBox.classList.remove('flex');
+            successBox.classList.add('hidden');
+
+            currentCarIssue = brokenCarTypes[Math.floor(Math.random() * brokenCarTypes.length)];
+            targetNumber = Math.floor(Math.random() * maxRange) + 1;
+
+            document.getElementById('carEmoji').textContent = currentCarIssue.broken;
+            document.getElementById('carStatusText').textContent = `${currentCarIssue.desc} 幫幫我找零件`;
+            document.getElementById('carStatusText').className = "text-xl sm:text-2xl font-bold text-rose-400 mt-3";
+
+            let options = [targetNumber];
+            while (options.length < 4) {
+                let rand = Math.floor(Math.random() * maxRange) + 1;
+                if (!options.includes(rand)) {
+                    options.push(rand);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            options.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = "py-4 sm:py-5 rounded-2xl bg-slate-900 hover:bg-slate-800 border-2 border-slate-700 text-3xl sm:text-4xl font-black text-amber-400 shadow-xl pulse-btn";
+                btn.textContent = `#${num}`;
+                btn.onclick = () => checkAnswer(num, btn);
+                grid.appendChild(btn);
+            });
+
+            playTargetAudio();
+        }
+
+        function playTargetAudio() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const textToSpeak = `${currentCarIssue.desc} 快幫我找${targetNumber}號零件`;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'zh-TW';
+                utterance.rate = 0.9;
+                
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(v => (v.lang.includes('zh') || v.lang.includes('cmn')) && (v.name.includes('Female') || v.name.includes('Meijia') || v.name.includes('Yaoyao') || v.name.includes('Hsiao') || v.name.includes('Hui')));
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function playPraiseAudio(praiseText) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(praiseText);
+                utterance.lang = 'zh-TW';
+                utterance.pitch = 1.35;
+                utterance.rate = 1.15;
+
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(v => (v.lang.includes('zh') || v.lang.includes('cmn')) && (v.name.includes('Female') || v.name.includes('Meijia') || v.name.includes('Yaoyao') || v.name.includes('Hsiao') || v.name.includes('Hui')));
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function checkAnswer(selectedNum, btnElement) {
+            if (isAnswered) return;
+
+            if (selectedNum === targetNumber) {
+                isAnswered = true;
+                playSound('success');
+                fixedCountVal++;
+                document.getElementById('fixedCount').textContent = fixedCountVal;
+
+                document.getElementById('carEmoji').textContent = currentCarIssue.fixed;
+                document.getElementById('carStatusText').textContent = currentCarIssue.fixedDesc;
+                document.getElementById('carStatusText').className = "text-xl sm:text-2xl font-bold text-emerald-400 mt-3";
+
+                btnElement.classList.add('bg-emerald-600/40', 'border-emerald-500');
+
+                const praiseText = `${currentCarIssue.fixedDesc} 賽車手非常感謝你！`;
+                document.getElementById('praiseText').textContent = `🎉 ${praiseText}`;
+                const successBox = document.getElementById('successActionBox');
+                successBox.classList.remove('hidden');
+                successBox.classList.add('flex');
+
+                playPraiseAudio(praiseText);
+            } else {
+                playSound('click');
+                btnElement.classList.add('bg-rose-600/40', 'border-rose-500', 'opacity-50');
+            }
+        }
+
+        window.onload = function() {
+            nextRound();
+        };
+    </script>
+</body>
+</html>
